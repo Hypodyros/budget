@@ -143,7 +143,7 @@ input[type=month],input[type=date]{color-scheme:dark}
 @media (max-width:720px){
   .row.perso{grid-template-columns:1.7fr 1fr 36px 36px}.row.perso .inp.nom{grid-column:1/3;grid-row:1}.row.perso .del.sv{grid-column:3;grid-row:1}.row.perso .del:not(.sv){grid-column:4;grid-row:1}.row.perso select{grid-column:1/2;grid-row:2}.row.perso .money{grid-column:2/5;grid-row:2}.row.perso.linked{grid-template-columns:1fr auto 40px}.row.perso.linked>*{grid-column:auto!important;grid-row:auto!important}.row.perso.linked .muted{display:none}
   .row.commun{grid-template-columns:1fr 1fr 34px}.row.commun .inp.nom{grid-column:1/3}.row.commun .del{grid-row:1;grid-column:3}.row.commun .seg{grid-column:1/4}
-  .row.exc{grid-template-columns:1fr 1fr 34px}.row.exc .inp.lib{grid-column:1/3}.row.exc .del{grid-row:1;grid-column:3}
+  .row.exc{grid-template-columns:1fr 130px 36px}.row.exc .inp.lib{grid-column:1/3;grid-row:1}.row.exc .del{grid-column:3;grid-row:1}.row.exc input[type=date]{grid-column:1;grid-row:2}.row.exc .money{grid-column:2/4;grid-row:2}
 }
 
 /* Échéances du mois */
@@ -352,7 +352,7 @@ select{-webkit-appearance:none;appearance:none;padding-right:28px!important;back
     </div>
     <div class="sect">
       <h4>Version de l'appli</h4>
-      <div class="fill" style="border:0"><div class="t">Version <span id="appVer">budget-v8</span><small id="appVerInfo">Les mises à jour s'installent toutes seules.</small></div><button class="btn ghost" id="btnUpdate">Rechercher</button></div>
+      <div class="fill" style="border:0"><div class="t">Version <span id="appVer">budget-v9</span><small id="appVerInfo">Les mises à jour s'installent toutes seules.</small></div><button class="btn ghost" id="btnUpdate">Rechercher</button></div>
     </div>
     <div class="sect">
       <h4>Réinitialiser</h4>
