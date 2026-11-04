@@ -352,7 +352,7 @@ select{-webkit-appearance:none;appearance:none;padding-right:28px!important;back
     </div>
     <div class="sect">
       <h4>Version de l'appli</h4>
-      <div class="fill" style="border:0"><div class="t">Version <span id="appVer">budget-v7</span><small id="appVerInfo">Les mises à jour s'installent toutes seules.</small></div><button class="btn ghost" id="btnUpdate">Rechercher</button></div>
+      <div class="fill" style="border:0"><div class="t">Version <span id="appVer">budget-v8</span><small id="appVerInfo">Les mises à jour s'installent toutes seules.</small></div><button class="btn ghost" id="btnUpdate">Rechercher</button></div>
     </div>
     <div class="sect">
       <h4>Réinitialiser</h4>
@@ -467,7 +467,8 @@ function calc(k){
 }
 
 /* ---------- Sauvegarde ---------- */
-function persist(){S.savedAt=new Date().toISOString();try{localStorage.setItem(LS_KEY,JSON.stringify(S))}catch(e){}
+let lastLocal=null;
+function persist(){S.savedAt=new Date().toISOString();try{localStorage.setItem(LS_KEY,JSON.stringify(S));lastLocal=new Date()}catch(e){}
   if(folderOk){clearTimeout(saveTimer);saveTimer=setTimeout(()=>writeFolder(false),700)}else setSync()}
 function valid(d){return d&&d.version===2&&d.reglages&&Array.isArray(d.perso)&&Array.isArray(d.commun)&&Array.isArray(d.credits)&&d.mois&&typeof d.mois==="object"}
 function idb(){return new Promise((res,rej)=>{const r=indexedDB.open("budget-valentin",1);r.onupgradeneeded=()=>r.result.createObjectStore("kv");r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
@@ -506,9 +507,9 @@ async function writeFolder(manual){
 }
 function download(name){const b=new Blob([JSON.stringify(S,null,1)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name||FILE;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 function exportNow(){if(!S.savedAt)S.savedAt=new Date().toISOString();const d=new Date(),n="budget-export-"+d.toISOString().slice(0,10)+".json";download(n);toast("Export téléchargé : "+n,3500)}
-async function saveNow(){if(fsOK()){if(!dirHandle){await chooseFolder();return}if(await ensurePerm(true)){if(!lastWrite)await readFolder();await writeFolder(true)}else toast("Autorise l'accès au dossier")}else{download();toast("Copie téléchargée")}}
-function setSync(){const el=document.getElementById("sync");let ok=false,t;
-  if(inFrame)t="Aperçu : sauvegarde dossier impossible ici";else if(!fsOK())t="Sauvegardé dans ce navigateur";else if(lastErr)t="Erreur de sauvegarde : voir ⚙︎";else if(!dirHandle)t="Choisir un dossier de sauvegarde";else if(!folderOk)t="Clique n'importe où pour reconnecter « "+FOLDER+" »";
+async function saveNow(){if(fsOK()){if(!dirHandle){await chooseFolder();return}if(await ensurePerm(true)){if(!lastWrite)await readFolder();await writeFolder(true)}else toast("Autorise l'accès au dossier")}else{toast("✓ Tout est enregistré automatiquement sur cet appareil. Copie de sécurité : ⚙︎ › Exporter",4500)}}
+function setSync(){const sb=document.getElementById("btnSave");if(sb)sb.classList.toggle("hide",!fsOK());const el=document.getElementById("sync");let ok=false,t;
+  if(inFrame)t="Aperçu : sauvegarde dossier impossible ici";else if(!fsOK()){ok=true;t="Enregistré sur cet appareil"+(lastLocal?" à "+lastLocal.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}):"")}else if(lastErr)t="Erreur de sauvegarde : voir ⚙︎";else if(!dirHandle)t="Choisir un dossier de sauvegarde";else if(!folderOk)t="Clique n'importe où pour reconnecter « "+FOLDER+" »";
   else{ok=true;t="Enregistré"+(lastWrite?" à "+lastWrite.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}):"")}
   el.innerHTML=`<span class="dot ${ok?"ok":""}"></span><span>${esc(t)}</span>`}
 
