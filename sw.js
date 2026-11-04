@@ -1,6 +1,6 @@
 /* Service worker : l'app fonctionne hors ligne et se met à jour toute seule.
    Pour publier une nouvelle version, change VERSION ci-dessous. */
-const VERSION = "budget-v9";
+const VERSION = "budget-v10";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest",
   "./icons/apple-touch-icon.png", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/favicon-32.png"];
 
