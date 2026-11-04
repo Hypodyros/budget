@@ -351,6 +351,10 @@ select{-webkit-appearance:none;appearance:none;padding-right:28px!important;back
       <div class="fill" id="fAutre"><div class="t">Prénom de l'autre personne</div><input id="sAutre" class="inp" style="width:160px"></div>
     </div>
     <div class="sect">
+      <h4>Version de l'appli</h4>
+      <div class="fill" style="border:0"><div class="t">Version <span id="appVer">budget-v6</span><small id="appVerInfo">Les mises à jour s'installent toutes seules.</small></div><button class="btn ghost" id="btnUpdate">Rechercher</button></div>
+    </div>
+    <div class="sect">
       <h4>Réinitialiser</h4>
       <div class="muted">Efface toutes les données de l'appli sur cet appareil (mois, charges, crédits, dépenses) et revient à l'écran de bienvenue. Pense à <b>Exporter</b> avant si tu veux garder une copie.</div>
       <div class="btns"><button class="btn danger" id="btnReset">🗑️ Réinitialiser l'appli</button></div>
@@ -943,6 +947,10 @@ function syncLock(){const open=document.getElementById("modal").classList.contai
 new MutationObserver(syncLock).observe(document.body,{childList:true,subtree:false});
 new MutationObserver(syncLock).observe(document.getElementById("modal"),{attributes:true,attributeFilter:["class"]});
 document.getElementById("btnFolder").onclick=chooseFolder;
+document.getElementById("btnUpdate").onclick=async()=>{const info=document.getElementById("appVerInfo");
+  if(!window.__swReg){info.textContent="Mises à jour disponibles seulement dans l'appli en ligne.";return}
+  info.textContent="Recherche…";try{await window.__swReg.update()}catch(e){}
+  setTimeout(()=>{const r=window.__swReg;info.textContent=(r.installing||r.waiting)?"Nouvelle version trouvée : installation…":"Tu as la dernière version."},1500)};
 document.getElementById("btnReset").onclick=async()=>{
   if(!await ask("Réinitialiser l'appli ?\nToutes tes données sur cet appareil seront effacées : mois, charges, crédits, dépenses, pointage. C'est définitif.\n\nSi tu ne l'as pas fait, annule et clique d'abord sur « Exporter ».","Continuer",true))return;
   if(!await ask("Dernière confirmation\nTout effacer maintenant ?","Tout effacer",true))return;
@@ -988,7 +996,17 @@ document.getElementById("fileImport").onchange=async e=>{const f=e.target.files[
 <script>
 // Appli installable : fonctionne hors ligne et se met à jour toute seule (seulement quand elle est en ligne, pas en fichier local)
 if("serviceWorker" in navigator && /^https?:$/.test(location.protocol)){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(reg=>{
+      window.__swReg=reg;
+      reg.update().catch(()=>{});
+      // L'appli installée sur iPhone revient souvent du fond sans se recharger : on vérifie les mises à jour à chaque retour
+      document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")reg.update().catch(()=>{})});
+    }).catch(()=>{});
+    // Dès qu'une nouvelle version prend la main, on recharge une fois pour l'afficher (tes données ne bougent pas)
+    let had=!!navigator.serviceWorker.controller,reloading=false;
+    navigator.serviceWorker.addEventListener("controllerchange",()=>{if(had&&!reloading){reloading=true;location.reload()}had=true});
+  });
 }
 </script>
 </body>
