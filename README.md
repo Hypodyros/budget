@@ -34,7 +34,7 @@ L'app installée a ses propres données, séparées de Safari : importe la sauve
 ## Mettre à jour l'app
 
 1. Remplace `index.html` (et les autres fichiers modifiés) dans le dépôt.
-2. Dans `sw.js`, change `VERSION` (par exemple `budget-v5`).
+2. Dans `sw.js`, change `VERSION` (par exemple `budget-v6`).
 3. Ferme et rouvre l'app : la nouvelle version s'applique. Tes données ne sont pas touchées.
 
 ## Sauvegardes

@@ -208,6 +208,8 @@ td .st{justify-content:flex-end}
 
 /* Modal / toast */
 .modal{position:fixed;inset:0;background:rgba(3,6,12,.7);backdrop-filter:blur(6px);display:none;align-items:flex-start;justify-content:center;padding:40px 16px;z-index:30;overflow:auto}
+.modal,.welcome,.ask{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.modal{padding-bottom:calc(40px + env(safe-area-inset-bottom,0px))}
 .modal.on{display:flex}
 .modal .card{width:100%;max-width:540px;background:var(--s1)}
 .modal h3{margin:0 0 4px;font-family:var(--num);font-size:20px}
@@ -347,6 +349,11 @@ select{-webkit-appearance:none;appearance:none;padding-right:28px!important;back
       <div class="muted">Ils servent aux boutons « Concerne » des charges communes et des crédits communs (Commun / toi / l'autre personne) : c'est ce qui permet de calculer ta part du compte commun.</div>
       <div class="fill"><div class="t">Mon prénom</div><input id="sMoi" class="inp" style="width:160px"></div>
       <div class="fill" id="fAutre"><div class="t">Prénom de l'autre personne</div><input id="sAutre" class="inp" style="width:160px"></div>
+    </div>
+    <div class="sect">
+      <h4>Réinitialiser</h4>
+      <div class="muted">Efface toutes les données de l'appli sur cet appareil (mois, charges, crédits, dépenses) et revient à l'écran de bienvenue. Pense à <b>Exporter</b> avant si tu veux garder une copie.</div>
+      <div class="btns"><button class="btn danger" id="btnReset">🗑️ Réinitialiser l'appli</button></div>
     </div>
     <div class="btns" style="justify-content:flex-end;margin-top:22px"><button class="btn ghost" id="btnClose">Fermer</button></div>
   </div>
@@ -524,9 +531,9 @@ function newMonth(){const ks=keys(),last=ks[ks.length-1],k=nextKey(last),p=S.moi
   S.mois[k]={salaire:0,loisirs:p.loisirs,exc:[],fige:null};cur=k;view="mois";persist();renderAll();toast(mLabel(k)+" commencé : saisis ton salaire")}
 
 // Fenêtre de confirmation intégrée (les confirm() du navigateur sont bloqués dans certains aperçus et applis)
-function ask(msg,ok="Confirmer"){return new Promise(res=>{const w=document.createElement("div");w.className="ask";
+function ask(msg,ok="Confirmer",danger){return new Promise(res=>{const w=document.createElement("div");w.className="ask";
   const [t,...rest]=msg.split("\n");
-  w.innerHTML=`<div class="card"><h3 style="margin:0 0 10px;font-family:var(--num)">${esc(t)}</h3><p class="muted">${esc(rest.join("\n").trim())}</p><div class="btns" style="justify-content:flex-end"><button class="btn ghost" data-a="0">Annuler</button><button class="btn" data-a="1">${esc(ok)}</button></div></div>`;
+  w.innerHTML=`<div class="card"><h3 style="margin:0 0 10px;font-family:var(--num)">${esc(t)}</h3><p class="muted">${esc(rest.join("\n").trim())}</p><div class="btns" style="justify-content:flex-end"><button class="btn ghost" data-a="0">Annuler</button><button class="btn ${danger?"danger":""}" data-a="1">${esc(ok)}</button></div></div>`;
   w.onclick=e=>{const b=e.target.closest("[data-a]");if(!b&&e.target!==w)return;w.remove();res(!!b&&b.dataset.a==="1")};document.body.appendChild(w);w.querySelector('[data-a="1"]').focus()})}
 /* ---------- Petits composants ---------- */
 const money=(v,a,sm)=>`<span class="money${sm?" sm":""}"><input inputmode="decimal" value="${v===""||v==null?"":String(Math.round(num(v)*100)/100).replace(".",",")}" ${a}></span>`;
@@ -926,7 +933,25 @@ document.getElementById("btnClose").onclick=()=>modal.classList.remove("on");
 modal.addEventListener("click",e=>{if(e.target===modal)modal.classList.remove("on")});
 document.getElementById("sMoi").onchange=e=>{S.reglages.moi=e.target.value.trim();persist();renderAll()};
 document.getElementById("sAutre").onchange=e=>{S.reglages.autre=e.target.value.trim();persist();renderAll()};
+/* Quand une fenêtre (réglages, confirmation, bienvenue) est ouverte, la page de derrière est bloquée :
+   sur iPhone, sinon c'est elle qui défile au lieu de la fenêtre. */
+let lockY=null;
+function syncLock(){const open=document.getElementById("modal").classList.contains("on")||!!document.querySelector(".ask,#welcome");
+  const b=document.body;
+  if(open&&lockY===null){lockY=window.scrollY;b.style.position="fixed";b.style.top=(-lockY)+"px";b.style.left="0";b.style.right="0";b.style.overflow="hidden"}
+  else if(!open&&lockY!==null){b.style.position=b.style.top=b.style.left=b.style.right=b.style.overflow="";window.scrollTo(0,lockY);lockY=null}}
+new MutationObserver(syncLock).observe(document.body,{childList:true,subtree:false});
+new MutationObserver(syncLock).observe(document.getElementById("modal"),{attributes:true,attributeFilter:["class"]});
 document.getElementById("btnFolder").onclick=chooseFolder;
+document.getElementById("btnReset").onclick=async()=>{
+  if(!await ask("Réinitialiser l'appli ?\nToutes tes données sur cet appareil seront effacées : mois, charges, crédits, dépenses, pointage. C'est définitif.\n\nSi tu ne l'as pas fait, annule et clique d'abord sur « Exporter ».","Continuer",true))return;
+  if(!await ask("Dernière confirmation\nTout effacer maintenant ?","Tout effacer",true))return;
+  // On détache aussi le dossier de sauvegarde : le fichier déjà enregistré (NAS, Documents…) reste intact et n'est pas écrasé par un budget vide
+  try{localStorage.removeItem(LS_KEY)}catch(e){}
+  try{const db=await idb();db.transaction("kv","readwrite").objectStore("kv").delete("dir")}catch(e){}
+  dirHandle=null;folderOk=false;lastWrite=null;lastErr=null;
+  S=DEFAULT();cur=pickCur();view="mois";modal.classList.remove("on");renderAll();welcome();toast("Appli réinitialisée",3000);
+};
 document.getElementById("tCommun").onclick=()=>{S.reglages.commun=!CC();persist();renderAll();renderSettings()};
 document.getElementById("tArrondi").onclick=()=>{S.reglages.arrondi=!ARR();persist();renderAll();renderSettings()};
 document.getElementById("btnExport").onclick=exportNow;
