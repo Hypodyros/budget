@@ -352,7 +352,7 @@ select{-webkit-appearance:none;appearance:none;padding-right:28px!important;back
     </div>
     <div class="sect">
       <h4>Version de l'appli</h4>
-      <div class="fill" style="border:0"><div class="t">Version <span id="appVer">budget-v10</span><small id="appVerInfo">Les mises à jour s'installent toutes seules.</small></div><button class="btn ghost" id="btnUpdate">Rechercher</button></div>
+      <div class="fill" style="border:0"><div class="t">Version <span id="appVer">budget-v11</span><small id="appVerInfo">Les mises à jour s'installent toutes seules.</small></div><button class="btn ghost" id="btnUpdate">Rechercher</button></div>
     </div>
     <div class="sect">
       <h4>Réinitialiser</h4>
@@ -866,18 +866,29 @@ function renderAll(){
 const main=document.querySelector("main");
 const credit=el=>S.credits.find(c=>c.id===el.closest("[data-cid]").dataset.cid);
 function setEch(c,k,patch){c.ech=c.ech||{};const cur0=schedule(c).find(r=>r.k===k);const e=c.ech[k]||{m:cur0?cur0.m:num(c.mensualite),s:""};Object.assign(e,patch);if(e.s==="saute"&&patch.s)e.m=0;if(patch.s==="ok"&&!num(e.m))e.m=num(c.mensualite);c.ech[k]=e}
-main.addEventListener("change",e=>{
-  const t=e.target,d=t.dataset;
-  if(d.m!==undefined){if(S.mois[cur].valide&&["salaire","loisirs","virement","epChoix"].includes(d.m))return;S.mois[cur][d.m]=((d.m==="virement"||d.m==="epChoix")&&t.value.trim()==="")?null:num(t.value)}
+// Enregistre la valeur d'un champ dans les données (sans redessiner l'écran). Renvoie false si le champ n'est pas géré.
+function applyField(t){const d=t.dataset;
+  if(d.m!==undefined){if(S.mois[cur].valide&&["salaire","loisirs","virement","epChoix"].includes(d.m))return false;S.mois[cur][d.m]=((d.m==="virement"||d.m==="epChoix")&&t.value.trim()==="")?null:num(t.value)}
   else if(d.d){const id=t.closest("[data-bud]").dataset.bud;const dd=S.mois[cur].dep[id].find(z=>z.id===t.closest("[data-did]").dataset.did);dd[d.d]=d.d==="montant"?num(t.value):t.value}
   else if(d.e){const x=S.mois[cur].exc.find(z=>z.id===t.closest("[data-id]").dataset.id);x[d.e]=d.e==="montant"?num(t.value):t.value}
   else if(d.f){const row=t.closest("[data-list]");const it=S[row.dataset.list].find(z=>z.id===row.dataset.id);it[d.f]=d.f==="montant"?num(t.value):t.value}
   else if(d.cf){const c=credit(t);c[d.cf]=(d.cf==="capital"||d.cf==="mensualite")?num(t.value):t.value;if(d.cf==="compte"){c.concerne=t.value==="perso"?"moi":"commun";c.budget=t.value==="perso"}}
   else if(d.em!==undefined&&t.value.trim()===""){const c=credit(t);const k=t.closest("[data-k]").dataset.k;if(c.ech)delete c.ech[k]} // case vidée = retour à la mensualité prévue
   else if(d.em!==undefined){const c=credit(t);const k=t.closest("[data-k]").dataset.k;const ex=(c.ech||{})[k];setEch(c,k,{m:num(t.value),s:ex&&ex.s==="saute"&&num(t.value)>0?"":(ex?ex.s:"")})}
-  else return;
-  persist();renderAll();
+  else return false;
+  return true;
+}
+// Champs de date / mois : sur iPhone, redessiner l'écran pendant que le calendrier est ouvert le refermait
+// (et prenait la date du jour d'office). On enregistre tout de suite, mais on ne redessine qu'à la fermeture du calendrier.
+const isDateField=t=>t&&(t.type==="date"||t.type==="month");
+let dateDirty=false;
+main.addEventListener("change",e=>{const t=e.target;
+  if(isDateField(t)){if(applyField(t)){persist();if(document.activeElement===t)dateDirty=true;else renderAll()}return}
+  if(applyField(t)){persist();renderAll()}
 });
+// « Réinitialiser » / « Effacer » du calendrier iPhone : la valeur devient vide sans toujours déclencher « change »
+main.addEventListener("input",e=>{const t=e.target;if(!isDateField(t))return;if(applyField(t)){persist();dateDirty=true}});
+main.addEventListener("focusout",e=>{if(isDateField(e.target)&&dateDirty){dateDirty=false;setTimeout(()=>{if(!isDateField(document.activeElement))renderAll()},60)}});
 main.addEventListener("submit",e=>{const f=e.target;if(!f.dataset.budadd)return;e.preventDefault();const v=num(f.m.value);if(!v){f.m.focus();return}
   const m=S.mois[cur];m.dep=m.dep||{};const id=f.dataset.budadd;m.dep[id]=m.dep[id]||[];
   const today=new Date(),tk=today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0");
@@ -885,7 +896,6 @@ main.addEventListener("submit",e=>{const f=e.target;if(!f.dataset.budadd)return;
   persist();renderAll();main.querySelector(`[data-budadd="${id}"] input`)?.focus();toast(eur(v)+" ajouté");});
 main.addEventListener("submit",e=>{if(e.target.id!=="repForm")return;e.preventDefault();const f=e.target;const v=num(f.m.value||f.m.placeholder);if(!(v>0)){f.m.focus();return}
   const m=S.mois[cur];m.reprises=m.reprises||[];m.reprises.push({id:uid(),date:new Date().toISOString(),montant:v,libelle:f.l.value.trim()});persist();renderAll();toast(eur(v)+" repris sur l'épargne");});
-main.addEventListener("input",e=>{const t=e.target;if(t.type==="month"&&t.value===""&&t.dataset.cf){const c=credit(t);if(c[t.dataset.cf]){c[t.dataset.cf]="";persist();renderAll()}}});
 main.addEventListener("toggle",e=>{const d=e.target;if(d.dataset&&d.dataset.y==="termines"){openYears.__t=d.open;return}if(!d.matches||!d.matches("details.year"))return;const id=d.closest("[data-cid]").dataset.cid;(openYears[id]=openYears[id]||{})[d.dataset.y]=d.open},true);
 main.addEventListener("click",async e=>{
   const t=e.target.closest("button,[data-go],[data-ctoggle],[data-goview]");if(!t)return;const d=t.dataset;
