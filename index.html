@@ -352,7 +352,7 @@ select{-webkit-appearance:none;appearance:none;padding-right:28px!important;back
     </div>
     <div class="sect">
       <h4>Version de l'appli</h4>
-      <div class="fill" style="border:0"><div class="t">Version <span id="appVer">budget-v11</span><small id="appVerInfo">Les mises à jour s'installent toutes seules.</small></div><button class="btn ghost" id="btnUpdate">Rechercher</button></div>
+      <div class="fill" style="border:0"><div class="t">Version <span id="appVer">budget-v12</span><small id="appVerInfo">Les mises à jour s'installent toutes seules.</small></div><button class="btn ghost" id="btnUpdate">Rechercher</button></div>
     </div>
     <div class="sect">
       <h4>Réinitialiser</h4>
@@ -621,7 +621,7 @@ function renderMois(){
     <div class="card c7">
       <h2>Dépenses exceptionnelles <span class="r">cadeaux, réparations…</span></h2>
       <div class="rows">${m.exc.length?m.exc.map(e=>`<div class="row exc" data-id="${e.id}">
-        <input type="date" class="inp" value="${esc(e.date||"")}" data-e="date">
+        <input type="date" class="inp" data-val="${esc(e.date||"")}" data-e="date">
         <input class="inp lib" value="${esc(e.libelle)}" placeholder="Ex. : cadeau anniversaire" data-e="libelle">
         ${money(e.montant,'data-e="montant"',true)}
         <button class="del" data-del-exc="${e.id}" aria-label="Supprimer">✕</button></div>`).join(""):`<div class="empty">Aucune dépense exceptionnelle ce mois-ci.</div>`}</div>
@@ -711,9 +711,9 @@ function loanCard(c){
     ${op==="params"?`<div class="params">
       <label class="wide">Nom<input class="inp" value="${esc(c.nom)}" data-cf="nom"></label>
       <label>Capital emprunté${money(c.capital,'data-cf="capital"',true)}</label>
-      <label>Premier mois<input type="month" class="inp" value="${esc(c.debut)}" data-cf="debut"></label>
+      <label>Premier mois<input type="month" class="inp" data-val="${esc(c.debut||"")}" data-cf="debut"></label>
       <label>Mensualité prévue${money(c.mensualite,'data-cf="mensualite"',true)}</label>
-      <label>Soldé au plus tard en<span class="mrow"><input type="month" class="inp" value="${esc(c.finCible||"")}" data-cf="finCible">${c.finCible?`<button type="button" class="del" data-clearfin="${c.id}" title="Pas de date de fin" aria-label="Effacer la date">✕</button>`:""}</span></label>
+      <label>Soldé au plus tard en<span class="mrow"><input type="month" class="inp" data-val="${esc(c.finCible||"")}" data-cf="finCible">${c.finCible?`<button type="button" class="del" data-clearfin="${c.id}" title="Pas de date de fin" aria-label="Effacer la date">✕</button>`:""}</span></label>
       <label>Prélevé sur<select data-cf="compte"><option value="perso" ${c.compte==="perso"?"selected":""}>Mon compte</option>${CC()?`<option value="commun" ${c.compte==="commun"?"selected":""}>Compte commun</option>`:""}</select></label>
       ${c.compte==="commun"?`<label class="wide">Concerne${seg(c.concerne,'data-cseg="concerne"',opts)}</label>`:
         `<label class="wide"><span class="toggle" data-ctoggle="budget"><span class="sw ${c.budget?"on":""}"></span>Déduire chaque mois de mon budget</span></label>`}
@@ -771,7 +771,7 @@ function renderPointage(){
       <div class="bar2"><i style="width:${p*100}%;background:${col}"></i></div>
       ${op?`<div class="envb">
         <form class="quick" data-budadd="${x.bud}"><span class="money sm"><input name="m" inputmode="decimal" placeholder="Montant" autocomplete="off"></span><input class="inp" name="l" placeholder="Pour quoi ? (facultatif)" autocomplete="off"><button class="btn" type="submit">Ajouter</button></form>
-        <div class="rows">${x.dep.length?x.dep.slice().reverse().map(d=>`<div class="row exc" data-did="${d.id}"><input type="date" class="inp" value="${esc(d.date||"")}" data-d="date"><input class="inp lib" value="${esc(d.libelle||"")}" placeholder="—" data-d="libelle">${money(d.montant,'data-d="montant"',true)}<button class="del" data-deldep="${d.id}" aria-label="Supprimer">✕</button></div>`).join(""):`<div class="empty">Aucune dépense notée pour l'instant.</div>`}</div>
+        <div class="rows">${x.dep.length?x.dep.slice().reverse().map(d=>`<div class="row exc" data-did="${d.id}"><input type="date" class="inp" data-val="${esc(d.date||"")}" data-d="date"><input class="inp lib" value="${esc(d.libelle||"")}" placeholder="—" data-d="libelle">${money(d.montant,'data-d="montant"',true)}<button class="del" data-deldep="${d.id}" aria-label="Supprimer">✕</button></div>`).join(""):`<div class="empty">Aucune dépense notée pour l'instant.</div>`}</div>
       </div>`:""}</div>`};
   const group=(title,sub,all,gk)=>{const list=all.filter(x=>!x.bud),buds=all.filter(x=>x.bud);
     const done=list.filter(x=>x.ok);let tot=list.reduce((a,x)=>a+x.v,0),dv=done.reduce((a,x)=>a+x.v,0);
@@ -860,6 +860,9 @@ function renderAll(){
   renderHead();({mois:renderMois,pointage:renderPointage,charges:renderCharges,credits:renderCredits,histo:renderHisto})[view]();
   document.querySelectorAll("main>section").forEach(s=>s.classList.toggle("hide",s.id!=="v-"+view));
   document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.v===view));setSync();
+  // Les dates sont posées après coup (et non dans le HTML) : ainsi le bouton « Réinitialiser » du calendrier iPhone,
+  // qui remet le champ à sa valeur « d'origine », le remet bien à vide au lieu de l'ancienne date.
+  document.querySelectorAll("main input[data-val]").forEach(i=>{i.value=i.dataset.val});
 }
 
 /* ---------- Événements ---------- */
