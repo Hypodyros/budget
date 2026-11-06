@@ -143,7 +143,7 @@ input[type=month],input[type=date]{color-scheme:dark}
 @media (max-width:720px){
   .row.perso{grid-template-columns:1.7fr 1fr 36px 36px}.row.perso .inp.nom{grid-column:1/3;grid-row:1}.row.perso .del.sv{grid-column:3;grid-row:1}.row.perso .del:not(.sv){grid-column:4;grid-row:1}.row.perso select{grid-column:1/2;grid-row:2}.row.perso .money{grid-column:2/5;grid-row:2}.row.perso.linked{grid-template-columns:1fr auto 40px}.row.perso.linked>*{grid-column:auto!important;grid-row:auto!important}.row.perso.linked .muted{display:none}
   .row.commun{grid-template-columns:1fr 1fr 34px}.row.commun .inp.nom{grid-column:1/3}.row.commun .del{grid-row:1;grid-column:3}.row.commun .seg{grid-column:1/4}
-  .row.exc{grid-template-columns:1fr 130px 36px}.row.exc .inp.lib{grid-column:1/3;grid-row:1}.row.exc .del{grid-column:3;grid-row:1}.row.exc input[type=date]{grid-column:1;grid-row:2}.row.exc .money{grid-column:2/4;grid-row:2}
+  .row.exc{grid-template-columns:1fr 130px 36px}.row.exc>.inp.lib{grid-column:1/3;grid-row:1}.row.exc>.del{grid-column:3;grid-row:1}.row.exc>input[type=date]{grid-column:1;grid-row:2}.row.exc>.money{grid-column:2/4;grid-row:2}
 }
 
 /* Échéances du mois */
@@ -224,6 +224,13 @@ td .st{justify-content:flex-end}
 .banner{background:var(--s2);border-radius:13px;padding:10px 12px;font-size:13px;color:var(--mu);display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:12px}
 .lnk{background:none;border:0;color:var(--mint);font-weight:700;cursor:pointer;padding:0;font-size:13px}
 .hide{display:none!important}
+.dubtn{grid-column:1/-1;justify-self:start;background:none;border:0;color:var(--mu);font-size:12.5px;font-weight:600;cursor:pointer;padding:2px 4px}
+.dubtn:hover{color:var(--amber)}
+.duline{grid-column:1/-1;display:grid;grid-template-columns:auto 110px 38px 1fr auto 34px;gap:8px;align-items:center;padding:8px;border-radius:11px;background:var(--amberSoft)}
+.duline.ok{background:var(--mintSoft)}
+.duline .dul{font-size:12.5px;font-weight:700;color:var(--amber)}.duline.ok .dul{color:var(--mint)}
+.duline .lbtn{padding:6px 0;text-align:center}
+@media (max-width:720px){.duline{grid-template-columns:1fr 1fr 38px 34px}.duline>.dul{grid-column:1/-1;grid-row:1}.duline>.money{grid-column:1/3;grid-row:2}.duline>.lbtn{grid-column:3;grid-row:2}.duline>.del{grid-column:4;grid-row:2}.duline>.inp{grid-column:1/3;grid-row:3}.duline>.tag{grid-column:3/5;grid-row:3;justify-self:end}}
 .mrow{display:flex;gap:6px;align-items:center}.mrow .inp{flex:1}
 input[type=month],input[type=date]{min-width:0;width:100%;-webkit-appearance:none;appearance:none;min-height:38px;text-align:left}
 select{-webkit-appearance:none;appearance:none;padding-right:28px!important;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238C96AD' stroke-width='2' fill='none'/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-position:right 10px center!important}
@@ -352,7 +359,7 @@ select{-webkit-appearance:none;appearance:none;padding-right:28px!important;back
     </div>
     <div class="sect">
       <h4>Version de l'appli</h4>
-      <div class="fill" style="border:0"><div class="t">Version <span id="appVer">budget-v13</span><small id="appVerInfo">Les mises à jour s'installent toutes seules.</small></div><button class="btn ghost" id="btnUpdate">Rechercher</button></div>
+      <div class="fill" style="border:0"><div class="t">Version <span id="appVer">budget-v14</span><small id="appVerInfo">Les mises à jour s'installent toutes seules.</small></div><button class="btn ghost" id="btnUpdate">Rechercher</button></div>
     </div>
     <div class="sect">
       <h4>Réinitialiser</h4>
@@ -443,12 +450,26 @@ function fixes(k){
   const maPart=S.commun.reduce((a,c)=>a+part(c.concerne,num(c.montant)),0)+crC.reduce((a,x)=>a+part(x.c.concerne,x.m),0);
   return {persoCharges,creditsPerso,virement:Math.ceil(Math.round(maPart*100)/100/50)*50,totalCommun,maPart};
 }
+/* ---------- « On me doit » : dépenses avancées pour quelqu'un ---------- */
+function itemsDu(){const out=[];keys().forEach(k=>{const m=S.mois[k];
+  (m.exc||[]).forEach(x=>{if(x.du)out.push({k,ref:k+"|e|"+x.id,x})});
+  Object.entries(m.dep||{}).forEach(([b,l])=>(l||[]).forEach(x=>{if(x.du)out.push({k,ref:k+"|d|"+b+"|"+x.id,x})}))});return out}
+function itemByRef(ref){const [k,t,a,b]=ref.split("|"),m=S.mois[k];if(!m)return null;return t==="e"?(m.exc||[]).find(x=>x.id===a):((m.dep||{})[a]||[]).find(x=>x.id===b)}
+function retoursDu(k){return itemsDu().filter(o=>o.x.du.recuLe===k).reduce((a,o)=>a+Math.min(num(o.x.du.montant),num(o.x.montant)),0)}
+function itemOf(el){const did=el.closest("[data-did]");if(did){const b=el.closest("[data-bud]").dataset.bud;return ((S.mois[cur].dep||{})[b]||[]).find(z=>z.id===did.dataset.did)}
+  const row=el.closest(".row.exc[data-id]");return row?S.mois[cur].exc.find(z=>z.id===row.dataset.id):null}
+function duLine(it){if(!it.du)return `<button type="button" class="dubtn" data-dutoggle="1">↳ À me rembourser ?</button>`;
+  const ok=!!it.du.recuLe;return `<div class="duline ${ok?"ok":""}"><span class="dul">↳ À me rembourser</span>${money(it.du.montant,'data-du="montant"',true)}<button type="button" class="lbtn" data-duhalf="1" title="La moitié">½</button>
+  <input class="inp" data-du="qui" placeholder="par qui ? (facultatif)" value="${esc(it.du.qui||"")}"><span class="tag ${ok?"mint":"amber"}">${ok?"✓ remboursé":"⏳ en attente"}</span><button type="button" class="del" data-duremove="1" aria-label="Retirer">✕</button></div>`}
+
 function calc(k){
   const m=S.mois[k], f=m.fige||fixes(k);
-  const exc=m.exc.reduce((a,e)=>a+num(e.montant),0), salaire=num(m.salaire);
+  // Dépense partagée : « du » = part que quelqu'un doit me rembourser. Mon budget ne compte que ma part.
+  const duM=x=>x&&x.du?Math.min(Math.max(num(x.du.montant),0),num(x.montant)):0, net=x=>num(x.montant)-duM(x);
+  const exc=m.exc.reduce((a,e)=>a+num(e.montant),0), salaire=num(m.salaire); // sur le compte, la dépense entière est sortie
   // Budgets suivis au fil du mois (loisirs + charges perso marquées 📝) : on compte le budget, ou le réel s'il est dépassé
-  const dep=m.dep||{}, sum=a=>(a||[]).reduce((x,d)=>x+num(d.montant),0);
-  const loisirsBudget=num(m.loisirs), loisirsDep=sum(dep.loisirs), loisirs=Math.max(loisirsBudget,loisirsDep);
+  const dep=m.dep||{}, sum=a=>(a||[]).reduce((x,d)=>x+num(d.montant),0), part=a=>(a||[]).reduce((x,d)=>x+net(d),0);
+  const loisirsBudget=num(m.loisirs), loisirsDep=part(dep.loisirs), loisirs=Math.max(loisirsBudget,sum(dep.loisirs)); // budget ou argent réellement sorti
   const depasse=S.perso.filter(c=>c.suivi).reduce((a,c)=>a+Math.max(0,sum(dep[c.id])-num(c.montant)),0);
   const V=m.valide; // étape 2 : salaire, virement et épargne bloqués à la validation
   const manuel=m.virement!==undefined&&m.virement!==null&&m.virement!=="";
@@ -457,14 +478,16 @@ function calc(k){
   const sal=V?num(V.salaire):salaire;
   const depenses=f.persoCharges+depasse+f.creditsPerso+loisirs+exc;
   const recus=(m.recus||[]).reduce((a,x)=>a+num(x.montant),0); // argent reçu dans le mois (remboursements, virements)
-  const reste=sal+recus-virement-depenses;                  // ce qu'il est possible de mettre de côté
+  const avances=[...m.exc,...Object.values(dep).flat()].reduce((a,x)=>a+duM(x),0); // argent avancé pour les autres ce mois-ci
+  const retours=retoursDu(k);                                // remboursements « on me doit » reçus ce mois-ci
+  const reste=sal+recus+retours-virement-depenses;           // ce qu'il est possible de mettre de côté (les avances sont dans les dépenses, les remboursements reviennent quand ils arrivent)
   const proposition=Math.max(ARR()?Math.floor(reste/50)*50:Math.floor(reste*100)/100,0); // arrondi à 00/50 en dessous (si activé)
   const epChoisie=m.epChoix!==undefined&&m.epChoix!==null&&m.epChoix!=="";
   const epargne=V?num(V.epargne):(epChoisie?num(m.epChoix):proposition);
   const reprises=(m.reprises||[]).reduce((a,x)=>a+num(x.montant),0); // ce que TU choisis de reprendre sur l'épargne
   const marge=reste-epargne+reprises;                        // encore disponible sur mon compte (peut devenir négatif)
   return {...f,persoCharges:f.persoCharges+depasse,depasse,loisirsBudget,loisirsDep,virement,virAuto:auto,manuel,salaire:sal,loisirs,exc,depenses,reste,
-    attente:!V&&!sal,proposition,epChoisie,epargne,reprises,epargneNette:epargne-reprises,marge,recus,valide:!!V,comptePerso:sal+recus-virement-epargne};
+    attente:!V&&!sal,proposition,epChoisie,epargne,reprises,epargneNette:epargne-reprises,marge,recus,avances,retours,valide:!!V,comptePerso:sal+recus+retours-virement-epargne};
 }
 
 /* ---------- Sauvegarde ---------- */
@@ -560,6 +583,7 @@ function renderHead(){
 }
 
 function renderMois(){
+  const DUS=itemsDu(), duPend=DUS.filter(o=>!o.x.du.recuLe), duTotal=duPend.reduce((a,o)=>a+Math.min(num(o.x.du.montant),num(o.x.montant)),0), duRecus=DUS.filter(o=>o.x.du.recuLe===cur);
   const m=S.mois[cur], r=calc(cur), neg=r.attente?false:r.valide?r.marge<0:r.reste<0;
   const items=[["Charges perso",r.persoCharges+r.creditsPerso,"dont "+eur(r.creditsPerso,0)+" de crédits"],...(CC()?[["Virement commun",r.virement,"sur le compte commun"]]:[]),["Loisirs",r.loisirs,r.loisirsDep?eur(r.loisirsDep,0)+" dépensés sur "+eur(r.loisirsBudget,0):"budget du mois"],["Exceptionnel",r.exc,m.exc.length+" dépense"+(m.exc.length>1?"s":"")]];
   const ecart=r.virement-r.maPart, pc=v=>r.salaire?Math.round(v/r.salaire*100)+" %":"";
@@ -571,7 +595,7 @@ function renderMois(){
       <div class="amt">${r.attente?"— €":eur(!r.valide&&r.reste<0?r.reste:r.epargne).replace(/,(\d\d) €$/,'<small>,$1 €</small>')}</div>
       <div class="meta">
         <span class="chip">Salaire <b>${eur(r.salaire,0)}</b></span>
-        <span class="chip">Dépenses <b>${eur(r.virement+r.depenses,0)}</b></span>${r.recus?`<span class="chip">Reçu <b>+ ${eur(r.recus,0)}</b></span>`:""}
+        <span class="chip">Dépenses <b>${eur(r.virement+r.depenses,0)}</b></span>${r.recus?`<span class="chip">Reçu <b>+ ${eur(r.recus,0)}</b></span>`:""}${duTotal?`<span class="chip">On te doit <b>${eur(duTotal,0)}</b></span>`:""}
         <span class="chip"><b>${r.salaire?Math.round(r.epargne/r.salaire*100):0} %</b> du salaire</span>${!r.valide&&r.marge>0?`<span class="chip">Marge <b>${eur(r.marge)}</b> sur ton compte</span>`:""}${r.reprises?`<span class="chip">Repris sur l'épargne <b>${eur(r.reprises)}</b></span>`:""}
       </div>
       <div class="tr ${CC()?"":"two"}">
@@ -614,6 +638,8 @@ function renderMois(){
           <div><div class="n">${n} <span class="pc">${pc(v)}</span></div><div class="bar2"><i style="width:${r.salaire?Math.min(v/r.salaire*100,100):0}%;background:${ICON[n][0]}"></i></div></div>
           <div class="v num">− ${eur(v)}<small>${esc(sub)}</small></div></div>`).join("")}
         ${r.recus?`<div class="bdr"><div class="ico" style="background:var(--mintSoft)">💸</div><div><div class="n">Argent reçu <span class="pc" style="color:var(--mint)">${pc(r.recus)}</span></div></div><div class="v num" style="color:var(--mint)">+ ${eur(r.recus)}<small>${(m.recus||[]).length} remboursement${(m.recus||[]).length>1?"s":""} / virement${(m.recus||[]).length>1?"s":""}</small></div></div>`:""}
+        ${r.avances?`<div class="bdr"><div class="ico" style="background:var(--amberSoft)">🤝</div><div><div class="n">Avancé pour les autres <span class="pc">${pc(r.avances)}</span></div></div><div class="v num" style="color:var(--mu)">${eur(r.avances)}<small>déjà compté dans tes dépenses · on te le doit</small></div></div>`:""}
+        ${r.retours?`<div class="bdr"><div class="ico" style="background:var(--mintSoft)">↩️</div><div><div class="n">Remboursements reçus <span class="pc" style="color:var(--mint)">${pc(r.retours)}</span></div></div><div class="v num" style="color:var(--mint)">+ ${eur(r.retours)}<small>ce qu'on te devait</small></div></div>`:""}
         <div class="sep"></div>
         <div class="bdr"><div class="ico" style="background:var(--mintSoft)">💰</div><div class="n">À mettre de côté <span class="pc" style="color:var(--mint)">${pc(!r.valide&&r.reste<0?r.reste:r.epargne)}</span></div><div class="v num" style="color:${!r.valide&&r.reste<0?"var(--coral)":"var(--mint)"};font-size:17px">${eur(!r.valide&&r.reste<0?r.reste:r.epargne)}</div></div>
         ${r.valide||r.marge>0?`<div class="bdr"><div class="ico" style="background:var(--s3)">👛</div><div class="n">${r.valide?"Encore disponible sur mon compte":"Marge gardée sur mon compte"}</div><div class="v num" style="color:${r.marge<0?"var(--coral)":"var(--mu)"}">${eur(r.marge)}</div></div>`:""}
@@ -626,7 +652,7 @@ function renderMois(){
         <input type="date" class="inp" data-val="${esc(e.date||"")}" data-e="date">
         <input class="inp lib" value="${esc(e.libelle)}" placeholder="Ex. : cadeau anniversaire" data-e="libelle">
         ${money(e.montant,'data-e="montant"',true)}
-        <button class="del" data-del-exc="${e.id}" aria-label="Supprimer">✕</button></div>`).join(""):`<div class="empty">Aucune dépense exceptionnelle ce mois-ci.</div>`}</div>
+        <button class="del" data-del-exc="${e.id}" aria-label="Supprimer">✕</button>${duLine(e)}</div>`).join(""):`<div class="empty">Aucune dépense exceptionnelle ce mois-ci.</div>`}</div>
       <button class="add" id="addExc">+ Ajouter une dépense</button>
       ${m.exc.length?`<div class="tot"><span>Total</span><span class="num">${eur(r.exc)}</span></div>`:""}
     </div>
@@ -642,6 +668,13 @@ function renderMois(){
       ${(m.recus||[]).length?`<div class="tot"><span>Total reçu</span><span class="num" style="color:var(--mint)">+ ${eur(r.recus)}</span></div>`:""}
       <div class="hint">L'argent reçu s'ajoute à ce que tu as sur ton compte : avant validation il augmente l'épargne proposée, après validation il augmente « Encore disponible ».</div>
     </div>
+
+    ${duPend.length||duRecus.length?`<div class="card c5">
+      <h2>On me doit <span class="r num" style="font-size:16px;color:var(--amber);font-weight:800">${eur(duTotal)}</span></h2>
+      ${duPend.length?duPend.map(o=>`<div class="ech"><span><b style="font-weight:600">${esc(o.x.du.qui||"Quelqu'un")}</b> · ${esc(o.x.libelle||"Dépense")}<div class="muted">${o.x.date?esc(new Date(o.x.date).toLocaleDateString("fr-FR")):esc(mLabel(o.k))} · avancé ${eur(num(o.x.montant))}</div></span><b class="num">${eur(Math.min(num(o.x.du.montant),num(o.x.montant)))}</b><button class="btn" style="padding:7px 10px;font-size:13px" data-durecu="${o.ref}">✓ Reçu</button></div>`).join(""):`<div class="empty">Plus rien en attente 👍</div>`}
+      ${duRecus.length?`<div class="muted" style="margin:12px 0 4px;font-weight:600">Remboursé en ${esc(mOnly(cur))}</div>${duRecus.map(o=>`<div class="ech"><span>${esc(o.x.du.qui||"Quelqu'un")} · ${esc(o.x.libelle||"Dépense")}</span><b class="num" style="color:var(--mint)">+ ${eur(Math.min(num(o.x.du.montant),num(o.x.montant)))}</b><button class="lnk" data-duannule="${o.ref}">Annuler</button></div>`).join("")}`:""}
+      <div class="hint">Quand l'argent arrive, touche « ✓ Reçu » : il est compté dans le mois affiché.</div>
+    </div>`:""}
 
     <div class="card c5">
       <h2>Échéances de crédit du mois</h2>
@@ -777,19 +810,19 @@ function pointage(k){
 }
 function renderPointage(){
   const P=pointage(cur);
-  const budRow=x=>{const sp=x.dep.reduce((a,d)=>a+num(d.montant),0),p=x.budget?Math.min(sp/x.budget,1):(sp?1:0),over=sp>x.budget,col=over?"var(--coral)":p>.8?"var(--amber)":"var(--mint)",op=openBud[x.bud];
+  const budRow=x=>{const sp=x.dep.reduce((a,d)=>a+num(d.montant)-(d.du?Math.min(num(d.du.montant),num(d.montant)):0),0),p=x.budget?Math.min(sp/x.budget,1):(sp?1:0),over=sp>x.budget,col=over?"var(--coral)":p>.8?"var(--amber)":"var(--mint)",op=openBud[x.bud];
     return `<div class="bud ${op?"open":""}" data-bud="${x.bud}">
       <button class="envh" data-budtoggle="${x.bud}"><span class="ico" style="background:var(--s3)">${x.ico}</span>
-        <span class="en"><b>${esc(x.nom)}</b><small>${eur(sp)} dépensés sur ${eur(x.budget,0)} · ${x.dep.length} dépense${x.dep.length>1?"s":""}</small></span>
+        <span class="en"><b>${esc(x.nom)}</b><small>${eur(sp)} dépensés sur ${eur(x.budget,0)} · ${x.dep.length} dépense${x.dep.length>1?"s":""}${(()=>{const av=x.dep.reduce((a,d)=>a+(d.du?Math.min(num(d.du.montant),num(d.montant)):0),0);return av?` · + ${eur(av,0)} avancés pour d'autres`:""})()}</small></span>
         <span class="er" style="color:${col}">${over?"− "+eur(sp-x.budget)+" de trop":eur(x.budget-sp)+" restants"}</span></button>
       <div class="bar2"><i style="width:${p*100}%;background:${col}"></i></div>
       ${op?`<div class="envb">
         <form class="quick" data-budadd="${x.bud}"><span class="money sm"><input name="m" inputmode="decimal" placeholder="Montant" autocomplete="off"></span><input class="inp" name="l" placeholder="Pour quoi ? (facultatif)" autocomplete="off"><button class="btn" type="submit">Ajouter</button></form>
-        <div class="rows">${x.dep.length?x.dep.slice().reverse().map(d=>`<div class="row exc" data-did="${d.id}"><input type="date" class="inp" data-val="${esc(d.date||"")}" data-d="date"><input class="inp lib" value="${esc(d.libelle||"")}" placeholder="—" data-d="libelle">${money(d.montant,'data-d="montant"',true)}<button class="del" data-deldep="${d.id}" aria-label="Supprimer">✕</button></div>`).join(""):`<div class="empty">Aucune dépense notée pour l'instant.</div>`}</div>
+        <div class="rows">${x.dep.length?x.dep.slice().reverse().map(d=>`<div class="row exc" data-did="${d.id}"><input type="date" class="inp" data-val="${esc(d.date||"")}" data-d="date"><input class="inp lib" value="${esc(d.libelle||"")}" placeholder="—" data-d="libelle">${money(d.montant,'data-d="montant"',true)}<button class="del" data-deldep="${d.id}" aria-label="Supprimer">✕</button>${duLine(d)}</div>`).join(""):`<div class="empty">Aucune dépense notée pour l'instant.</div>`}</div>
       </div>`:""}</div>`};
   const group=(title,sub,all,gk)=>{const list=all.filter(x=>!x.bud),buds=all.filter(x=>x.bud);
     const done=list.filter(x=>x.ok);let tot=list.reduce((a,x)=>a+x.v,0),dv=done.reduce((a,x)=>a+x.v,0);
-    buds.forEach(x=>{const sp=x.dep.reduce((a,d)=>a+num(d.montant),0);tot+=Math.max(x.budget,sp);dv+=sp});
+    buds.forEach(x=>{const sp=x.dep.reduce((a,d)=>a+num(d.montant)-(d.du?Math.min(num(d.du.montant),num(d.montant)):0),0);tot+=Math.max(x.budget,sp);dv+=sp});
     return `<div class="card c12">
       <h2>${title} <span class="r">${done.length} / ${list.length}</span></h2>
       <div class="muted">${sub}</div>
@@ -885,6 +918,7 @@ const credit=el=>S.credits.find(c=>c.id===el.closest("[data-cid]").dataset.cid);
 function setEch(c,k,patch){c.ech=c.ech||{};const cur0=schedule(c).find(r=>r.k===k);const e=c.ech[k]||{m:cur0?cur0.m:num(c.mensualite),s:""};Object.assign(e,patch);if(e.s==="saute"&&patch.s)e.m=0;if(patch.s==="ok"&&!num(e.m))e.m=num(c.mensualite);c.ech[k]=e}
 // Enregistre la valeur d'un champ dans les données (sans redessiner l'écran). Renvoie false si le champ n'est pas géré.
 function applyField(t){const d=t.dataset;
+  if(d.du){const it=itemOf(t);if(!it||!it.du)return false;it.du[d.du]=d.du==="montant"?num(t.value):t.value;return true}
   if(d.m!==undefined){if(S.mois[cur].valide&&["salaire","loisirs","virement","epChoix"].includes(d.m))return false;S.mois[cur][d.m]=((d.m==="virement"||d.m==="epChoix")&&t.value.trim()==="")?null:num(t.value)}
   else if(d.d){const id=t.closest("[data-bud]").dataset.bud;const dd=S.mois[cur].dep[id].find(z=>z.id===t.closest("[data-did]").dataset.did);dd[d.d]=d.d==="montant"?num(t.value):t.value}
   else if(d.r){const x=(S.mois[cur].recus||[]).find(z=>z.id===t.closest("[data-rid]").dataset.rid);if(!x)return false;x[d.r]=d.r==="montant"?num(t.value):t.value}
@@ -925,6 +959,11 @@ main.addEventListener("click",async e=>{
   if(t.id==="addExc"){S.mois[cur].exc.push({id:uid(),date:"",libelle:"",montant:0});persist();renderAll();const r=main.querySelectorAll(".row.exc .lib");r[r.length-1]?.focus();return}
   if(t.id==="addRecu"){const m=S.mois[cur];m.recus=m.recus||[];m.recus.push({id:uid(),date:"",libelle:"",montant:0});persist();renderAll();const r=main.querySelectorAll("[data-rid] .lib");r[r.length-1]?.focus();return}
   if(d.delRecu){const m=S.mois[cur];m.recus=(m.recus||[]).filter(z=>z.id!==d.delRecu);persist();renderAll();return}
+  if(d.dutoggle){const it=itemOf(t);if(it){it.du={montant:Math.round(num(it.montant)/2*100)/100,qui:"",recuLe:null};persist();renderAll()}return}
+  if(d.duhalf){const it=itemOf(t);if(it&&it.du){it.du.montant=Math.round(num(it.montant)/2*100)/100;persist();renderAll()}return}
+  if(d.duremove){const it=itemOf(t);if(it){delete it.du;persist();renderAll()}return}
+  if(d.durecu){const it=itemByRef(d.durecu);if(it&&it.du){it.du.recuLe=cur;it.du.recuDate=new Date().toISOString().slice(0,10);persist();renderAll();toast("Remboursement noté")}return}
+  if(d.duannule){const it=itemByRef(d.duannule);if(it&&it.du){it.du.recuLe=null;delete it.du.recuDate;persist();renderAll()}return}
   if(d.delExc){S.mois[cur].exc=S.mois[cur].exc.filter(z=>z.id!==d.delExc);persist();renderAll();return}
   if(d.add){const L=d.add,n=L==="perso"?{id:uid(),nom:"",cat:"Vie courante",montant:0}:{id:uid(),nom:"",cat:"Vie courante",concerne:"commun",montant:0};S[L].push(n);persist();renderAll();main.querySelector(`[data-id="${n.id}"] input`)?.focus();return}
   if(d.del){const it=S[d.del].find(z=>z.id===d.id);if(it&&(it.nom||num(it.montant))&&!await ask("Supprimer « "+(it.nom||"cette ligne")+" » ?"))return;S[d.del]=S[d.del].filter(z=>z.id!==d.id);persist();renderAll();return}
