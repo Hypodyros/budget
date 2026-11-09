@@ -1,8 +1,8 @@
 /* Service worker : l'app fonctionne hors ligne et se met à jour toute seule.
    Pour publier une nouvelle version, change VERSION ci-dessous. */
-const VERSION = "budget-v18";
+const VERSION = "budget-v19";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest",
-  "./icons/apple-touch-icon.png", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/favicon-32.png"];
+  "./icons/pm-apple-touch-icon.png", "./icons/pm-icon-192.png", "./icons/pm-icon-512.png", "./icons/pm-favicon-32.png"];
 
 self.addEventListener("install", e => {
   // cache: "reload" = on télécharge vraiment les fichiers, sans passer par le cache du navigateur

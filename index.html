@@ -7,8 +7,8 @@
 <title>Mon budget</title>
 <meta name="description" content="Budget personnel : mois, charges, crédits, épargne. Données enregistrées sur l'appareil.">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" href="icons/favicon-32.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/pm-favicon-32.png">
+<link rel="apple-touch-icon" href="icons/pm-apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Budget">
@@ -306,7 +306,7 @@ select{-webkit-appearance:none;appearance:none;padding-right:28px!important;back
 }
 body{font-family:"DM Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background-image:none}
 .bdr .v small,.month .lock{font-family:"DM Sans",sans-serif}
-.brand .mk,.welcome .mk{background:var(--acc);color:#fff}
+.brand .mk,.welcome .mk{background:none;padding:0;overflow:hidden}.mk svg{width:100%;height:100%;display:block}
 .card{border:0;box-shadow:var(--shadow)}
 .nav{background:#fff;border:0;box-shadow:var(--shadow)}
 .nav button.on{background:var(--accSoft);color:var(--acc)}.nav button.on svg{stroke:var(--acc)}
@@ -439,7 +439,7 @@ tr.now td{background:var(--accSoft)}
 <body>
 <div class="app">
   <div class="bar">
-    <div class="brand"><div class="mk">€</div>Mon budget</div>
+    <div class="brand"><div class="mk"><svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="23" fill="#D9734E"/><rect x="18" y="30" width="64" height="46" rx="12" fill="#FFF4EA"/><path d="M24 30 L66 18 Q71 17 72 22 L74 30 Z" fill="#F7D9C8"/><rect x="56" y="45" width="30" height="17" rx="8.5" fill="#F7D9C8"/><circle cx="66" cy="53.5" r="4" fill="#D9734E"/></svg></div>Mon budget</div>
     <div class="sync" id="sync" title="Sauvegarde"></div>
     <button class="icon-btn" id="btnSave" title="Enregistrer maintenant" aria-label="Enregistrer"><svg class="i" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg></button>
     <button class="icon-btn" id="btnSettings" title="Réglages" aria-label="Réglages"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
@@ -499,7 +499,7 @@ tr.now td{background:var(--accSoft)}
     </div>
     <div class="sect">
       <h4>Version de l'appli</h4>
-      <div class="fill" style="border:0"><div class="t">Version <span id="appVer">budget-v18</span><small id="appVerInfo">Les mises à jour s'installent toutes seules.</small></div><button class="btn ghost" id="btnUpdate">Rechercher</button></div>
+      <div class="fill" style="border:0"><div class="t">Version <span id="appVer">budget-v19</span><small id="appVerInfo">Les mises à jour s'installent toutes seules.</small></div><button class="btn ghost" id="btnUpdate">Rechercher</button></div>
     </div>
     <div class="sect">
       <h4>Réinitialiser</h4>
@@ -1143,7 +1143,7 @@ function sugg(list){const have=new Set(S[list].map(c=>(c.nom||"").toLowerCase())
 function welcome(){
   const w=document.createElement("div");w.className="welcome";w.id="welcome";
   w.innerHTML=`<div class="box">
-    <div class="mk">€</div>
+    <div class="mk"><svg viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="23" fill="#D9734E"/><rect x="18" y="30" width="64" height="46" rx="12" fill="#FFF4EA"/><path d="M24 30 L66 18 Q71 17 72 22 L74 30 Z" fill="#F7D9C8"/><rect x="56" y="45" width="30" height="17" rx="8.5" fill="#F7D9C8"/><circle cx="66" cy="53.5" r="4" fill="#D9734E"/></svg></div>
     <h1>Bienvenue 👋</h1>
     <div class="muted">Ton budget du mois, simple et clair. Tes données restent sur cet appareil : rien n'est envoyé sur internet.</div>
     <div class="card">
