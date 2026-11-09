@@ -427,6 +427,13 @@ tr.now td{background:var(--accSoft)}
 #v-credits .loan>.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}#v-credits .loan>.tags:empty{display:none}
 .det{background:none;border:0;padding:12px 0 0;color:var(--acc);font-weight:700;font-size:13.5px;cursor:pointer;text-align:left;font-family:inherit}
 #v-credits .loan .lbtns{margin-top:12px}#v-credits .loan .params,#v-credits .loan details.year{margin-top:12px}
+.pas.ini{font-weight:800;font-size:16px}
+.bs .icf{display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+.bs .icf b{font-size:14px;font-weight:600;color:var(--mu)}
+.icg{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;background:var(--s2);border-radius:14px;padding:8px;margin:-4px 0 10px}
+.icg button{border:0;background:none;font-size:21px;padding:6px 0;border-radius:10px;cursor:pointer;font-family:inherit}
+.icg button.sel{background:#fff;box-shadow:0 0 0 2px var(--acc)}
+.icg .auto{font-size:11px;font-weight:700;color:var(--mu)}
 </style>
 </head>
 <body>
@@ -492,7 +499,7 @@ tr.now td{background:var(--accSoft)}
     </div>
     <div class="sect">
       <h4>Version de l'appli</h4>
-      <div class="fill" style="border:0"><div class="t">Version <span id="appVer">budget-v15</span><small id="appVerInfo">Les mises à jour s'installent toutes seules.</small></div><button class="btn ghost" id="btnUpdate">Rechercher</button></div>
+      <div class="fill" style="border:0"><div class="t">Version <span id="appVer">budget-v16</span><small id="appVerInfo">Les mises à jour s'installent toutes seules.</small></div><button class="btn ghost" id="btnUpdate">Rechercher</button></div>
     </div>
     <div class="sect">
       <h4>Réinitialiser</h4>
@@ -825,22 +832,70 @@ function renderMois(){
 }
 
 /* ---------- Charges : liste claire, glisser pour supprimer, toucher pour modifier ---------- */
-const CATEMO={"Logement":"🏠","Crédits":"💳","Énergie":"⚡","Véhicule":"🚗","Assurances":"🛡️","Abonnements":"🎵","Vie courante":"🛒","Transport":"🚆","Banque & impôts":"🏦"};
+const CATEMO={"Logement":"🏠","Crédits":"💳","Énergie":"⚡","Véhicule":"🚗","Assurances":"🛡️","Abonnements":"🔁","Vie courante":"🛒","Transport":"🚆","Banque & impôts":"🏦"};
 const CATCOL={"Logement":"#D9734E","Crédits":"#A9779B","Énergie":"#D99A3E","Véhicule":"#6E9CBF","Assurances":"#5E8B6C","Abonnements":"#C77B9B","Vie courante":"#8FA35A","Transport":"#6E9CBF","Banque & impôts":"#8A7B70"};
-const KEYEMO=[[/loyer|logement|immo|maison|appart/,"🏠"],[/(^|\s)eau\b/,"💧"],[/[ée]lectri|edf|gaz|[ée]nergie|chauffage/,"⚡"],[/internet|box|fibre|wifi/,"🌐"],[/mobile|t[ée]l[ée]phone|forfait|portable/,"📱"],
-  [/mutuelle|sant[ée]|dent|m[ée]decin|pharma/,"🩺"],[/assurance/,"🛡️"],[/netflix|spotify|deezer|disney|canal|prime|streaming|musique/,"🎵"],[/sport|salle|gym|fitness/,"🏋️"],
-  [/voiture|auto|carburant|essence|diesel|p[ée]age|parking|moto/,"🚗"],[/course|nourriture|aliment|repas|cantine/,"🛒"],[/animau|chat|chien|v[ée]t[ée]rinaire/,"🐾"],
-  [/imp[ôo]t|taxe|banque|frais bancaire/,"🏦"],[/navigo|train|bus|m[ée]tro|transport|v[ée]lo/,"🚆"],[/cr[èe]che|[ée]cole|enfant|nounou|garde/,"🧸"],[/[ée]pargne|livret/,"🐖"],[/cr[ée]dit|pr[êe]t/,"💳"]];
-const pasEmo=(nom,cat)=>{const n=(nom||"").toLowerCase();for(const [re,e] of KEYEMO)if(re.test(n))return e;return CATEMO[cat]||"🧾"};
-const pas=(nom,cat)=>`<span class="pas" style="background:${(CATCOL[cat]||"#8A7B70")}22">${pasEmo(nom,cat)}</span>`;
+// Icône devinée d'après le nom (ordre important : le plus précis d'abord). B = début de mot.
+const KEYEMO=[
+  [/claude|chatgpt|openai|mistral|copilot|perplexity|gemini|midjourney|(^|[^a-zà-ÿ])ia([^a-zà-ÿ]|$)|intelligence artificielle/,"🤖"],
+  [/netflix|disney|prime video|canal\s?\+?|ocs|paramount|apple tv|(^|[^a-z])max([^a-z]|$)|hbo|molotov|crunchyroll|cin[ée]ma|film|s[ée]rie/,"🎬"],
+  [/spotify|deezer|apple music|musique|tidal|qobuz|soundcloud/,"🎵"],
+  [/youtube/,"▶️"],
+  [/twitch|playstation|ps\s?plus|xbox|game ?pass|nintendo|steam|jeux? vid[ée]o|(^|[^a-z])jeux?([^a-z]|$)/,"🎮"],
+  [/icloud|google one|dropbox|onedrive|stockage|cloud|google drive/,"☁️"],
+  [/microsoft|office|365|adobe|canva|logiciel|antivirus|norton|kaspersky|vpn|nordvpn|github|notion|application|(^|[^a-z])appli/,"💻"],
+  [/kindle|audible|livres?([^a-z]|$)|biblioth[èe]que|lecture/,"📚"],
+  [/journal|presse|magazine|le monde|figaro|lib[ée]ration|[ée]quipe|mediapart|abonnement presse/,"📰"],
+  [/amazon|prime/,"📦"],
+  [/carburant|essence|diesel|gazole|plein|station/,"⛽"],
+  [/p[ée]age|autoroute/,"🛣️"],
+  [/parking|stationnement/,"🅿️"],
+  [/moto|scooter/,"🏍️"],
+  [/voiture|auto|v[ée]hicule|garage|entretien|contr[ôo]le technique|lld|loa/,"🚗"],
+  [/loyer|logement|immo|maison|appart|charges? de copro|syndic|copropri[ée]t[ée]/,"🏠"],
+  [/(^|[^a-zà-ÿ])eau([^a-zà-ÿ]|$)|veolia|suez/,"💧"],
+  [/gaz|chauffage|fioul|granul[ée]s|(^|[^a-z])bois/,"🔥"],
+  [/[ée]lectri|edf|engie|totalenergies|[ée]nergie|ekwateur/,"⚡"],
+  [/internet|box|fibre|wifi|adsl/,"🌐"],
+  [/mobile|t[ée]l[ée]phone|forfait|portable|sfr|bouygues|(^|[^a-z])free|sosh|red by|(^|[^a-z])orange/,"📱"],
+  [/redevance|(^|[^a-z])t[ée]l[ée]([^a-z]|$)|(^|[^a-z])tv([^a-z]|$)|molotov/,"📺"],
+  [/dent|orthodont/,"🦷"],
+  [/lunette|optique|opticien|lentille/,"👓"],
+  [/pharma|m[ée]dicament/,"💊"],
+  [/mutuelle|sant[ée]|m[ée]decin|kin[ée]|psy|ost[ée]o|h[ôo]pital|docteur/,"🩺"],
+  [/assurance|maaf|maif|macif|matmut|axa|allianz|groupama/,"🛡️"],
+  [/sport|salle|gym|fitness|basic.?fit|piscine|yoga|danse|foot|tennis/,"🏋️"],
+  [/course|supermarch|nourriture|alimentation|carrefour|leclerc|lidl|auchan|intermarch|monoprix|drive/,"🛒"],
+  [/restaurant|resto|cantine|repas|d[ée]jeuner|uber ?eats|deliveroo/,"🍽️"],
+  [/animau|chat|chien|croquette|v[ée]t[ée]rinaire|v[ée]to/,"🐾"],
+  [/cr[èe]che|nounou|garde|enfant|b[ée]b[ée]|couche/,"🧸"],
+  [/[ée]cole|scolarit[ée]|[ée]tude|formation|universit|cours/,"🎓"],
+  [/imp[ôo]t|taxe|tr[ée]sor public/,"🏛️"],
+  [/banque|bancaire|carte bleue|cotisation carte|frais de compte/,"🏦"],
+  [/navigo|train|sncf|(^|[^a-z])bus|m[ée]tro|tram|transport|ratp|tcl|pass/,"🚆"],
+  [/v[ée]lo|trottinette/,"🚲"],
+  [/avion|voyage|vacances|h[ôo]tel|airbnb/,"✈️"],
+  [/coiffeur|coiffure|barbier|esth[ée]ti/,"💇"],
+  [/pressing|m[ée]nage|aide.?m[ée]nag/,"🧺"],
+  [/photo|appareil photo|objectif/,"📷"],
+  [/cadeau/,"🎁"],
+  [/(^|[^a-z])don([^a-z]|$)|association|caritati|parrainage/,"❤️"],
+  [/[ée]pargne|livret|(^|[^a-z])pel([^a-z]|$)|assurance.?vie/,"🐖"],
+  [/cr[ée]dit|pr[êe]t|emprunt/,"💳"],
+  [/abonnement/,"🔁"]];
+// Catégories assez précises pour donner une icône ; sinon on affiche l'initiale du nom
+const CATSURE={"Logement":"🏠","Crédits":"💳","Énergie":"⚡","Véhicule":"🚗","Assurances":"🛡️","Transport":"🚆","Banque & impôts":"🏦"};
+const ICOS=["🏠","⚡","🔥","💧","🌐","📱","📺","🛡️","🩺","🦷","👓","💊","🚗","⛽","🛣️","🅿️","🚆","🚲","✈️","🛒","🍽️","🐾","🧸","🎓","🏋️","🎬","🎵","▶️","🎮","🤖","☁️","💻","📦","📚","📰","🔁","🏦","🏛️","💳","🐖","📷","🎁","💇","🧺","❤️","🧾"];
+const pasEmo=(nom,cat)=>{const n=(nom||"").toLowerCase();for(const [re,e] of KEYEMO)if(re.test(n))return e;return CATSURE[cat]||""};
+const pas=(nom,cat,ico)=>{const col=CATCOL[cat]||"#8A7B70",e=ico||pasEmo(nom,cat);
+  return e?`<span class="pas" style="background:${col}22">${e}</span>`:`<span class="pas ini" style="background:${col}22;color:${col}">${esc(((nom||"").trim()[0]||"?").toUpperCase())}</span>`};
 const eur0=n=>{const r=Math.round(num(n)*100)/100;return eur(r,r%1?2:0)};
 let chTab="perso";
 function chRow(list,c){
   const sub=list==="perso"?(c.suivi?"suivi au jour le jour":""):c.concerne==="commun"?"partagé · ta part "+eur0(num(c.montant)/2):c.concerne==="moi"?"pour toi":"pour "+esc(who("autre"));
   return `<div class="swr"><button class="sdel" data-del="${list}" data-id="${c.id}">Supprimer</button>
-    <div class="it" data-edit="${list}:${c.id}">${pas(c.nom,c.cat)}<div class="n"><b>${esc(c.nom)||'<span class="muted">Sans nom</span>'}</b>${sub?`<small>${sub}</small>`:""}</div><div class="v num">${eur0(c.montant)}</div></div></div>`;
+    <div class="it" data-edit="${list}:${c.id}">${pas(c.nom,c.cat,c.ico)}<div class="n"><b>${esc(c.nom)||'<span class="muted">Sans nom</span>'}</b>${sub?`<small>${sub}</small>`:""}</div><div class="v num">${eur0(c.montant)}</div></div></div>`;
 }
-function crRow(c,m,sub){return `<div class="it link" data-goto-credit="${c.id}">${pas(c.nom,"Crédits")}<div class="n"><b>${esc(c.nom)}</b><small>${sub}</small></div><div class="v num" ${c.compte==="perso"&&!c.budget?'style="color:var(--mu);text-decoration:line-through"':""}>${eur0(m)}</div><span class="go">›</span></div>`}
+function crRow(c,m,sub){return `<div class="it link" data-goto-credit="${c.id}">${pas(c.nom,"Crédits",c.ico)}<div class="n"><b>${esc(c.nom)}</b><small>${sub}</small></div><div class="v num" ${c.compte==="perso"&&!c.budget?'style="color:var(--mu);text-decoration:line-through"':""}>${eur0(m)}</div><span class="go">›</span></div>`}
 function groups(list,extra){
   const by={};S[list].forEach(c=>{(by[c.cat]=by[c.cat]||[]).push(chRow(list,c))});
   const tot={};S[list].forEach(c=>{tot[c.cat]=(tot[c.cat]||0)+num(c.montant)});
@@ -873,7 +928,7 @@ function sheet(html){const w=document.createElement("div");w.className="bs";w.in
   document.body.appendChild(w);requestAnimationFrame(()=>requestAnimationFrame(()=>w.classList.add("on")));
   w.close=()=>{w.classList.remove("on");setTimeout(()=>w.remove(),200)};w.querySelector(".bsd").onclick=w.close;
   w.addEventListener("keydown",e=>{if(e.key==="Escape")w.close();if(e.key==="Enter"&&e.target.tagName==="INPUT"){e.preventDefault();w.querySelector(".okb")?.click()}});return w}
-const TILES=[["🏠","Loyer / crédit","Logement","Loyer"],["⚡","Énergie","Énergie","Électricité"],["🌐","Internet","Abonnements","Internet"],["📱","Mobile","Abonnements","Mobile"],["🛡️","Assurance","Assurances","Assurance"],["🎵","Abonnement","Abonnements",""],["🚗","Voiture","Véhicule",""],["🛒","Courses","Vie courante","Courses"],["➕","Autre","Vie courante",""]];
+const TILES=[["🏠","Loyer / crédit","Logement","Loyer"],["⚡","Énergie","Énergie","Électricité"],["🌐","Internet","Abonnements","Internet"],["📱","Mobile","Abonnements","Mobile"],["🛡️","Assurance","Assurances","Assurance"],["🔁","Abonnement","Abonnements",""],["🚗","Voiture","Véhicule",""],["🛒","Courses","Vie courante","Courses"],["➕","Autre","Vie courante",""]];
 function sheetTiles(list){
   const w=sheet(`<h4>Ajouter une charge</h4><div class="sub">${list==="commun"?"Sur le compte commun · ":""}Qu'est-ce que c'est ?</div>
     <div class="tiles">${TILES.map((t,i)=>`<button type="button" data-t="${i}"><span>${t[0]}</span>${t[1]}</button>`).join("")}</div>
@@ -887,6 +942,7 @@ function sheetEdit(list,id,preset){
   const w=sheet(`<h4>${it?"Modifier":"Nouvelle charge"}</h4><div class="sub">${list==="commun"?"Prélevée sur le compte commun":"Prélevée sur ton compte"}</div>
     <div class="bamt"><input id="bsM" inputmode="decimal" placeholder="0" value="${v.montant===""?"":String(Math.round(num(v.montant)*100)/100).replace(".",",")}"><span>€ / mois</span></div>
     <label class="field"><small>Nom</small><input id="bsN" value="${esc(v.nom)}" placeholder="Ex. Électricité" autocomplete="off"></label>
+    <div class="field icf" id="bsI"><span><small>Icône</small><b>Touche pour choisir</b></span><span id="bsIp"></span></div><div class="icg hide" id="bsG"><button type="button" data-i="" class="auto">Auto</button>${ICOS.map(e=>`<button type="button" data-i="${e}">${e}</button>`).join("")}</div>
     <label class="field"><small>Catégorie</small><select id="bsC">${CATS.map(c=>`<option ${c===v.cat?"selected":""}>${c}</option>`).join("")}</select></label>
     ${list==="commun"?`<div class="flbl">Pour qui ?</div><div class="who">${whoB.map(([k,e,l])=>`<button type="button" data-w="${k}" class="${v.concerne===k?"sel":""}"><span>${e}</span>${esc(l)}</button>`).join("")}</div><div class="part" id="bsP"></div>`
       :`<div class="field tg" id="bsS"><span><b>Suivre au jour le jour</b><small>pour noter tes dépenses dans le Pointage (courses, carburant…)</small></span><span class="sw ${v.suivi?"on":""}"></span></div>`}
@@ -895,10 +951,15 @@ function sheetEdit(list,id,preset){
   const M=w.querySelector("#bsM"),N=w.querySelector("#bsN"),Pp=w.querySelector("#bsP");
   const upd=()=>{if(!Pp)return;const m=num(M.value),p=part(v.concerne,m);Pp.innerHTML=v.concerne==="autre"?`<span>Ne compte pas dans ta part</span><b>0 €</b>`:`<span>Ta part</span><b class="num">${eur0(p)} / mois</b>`};upd();
   M.addEventListener("input",upd);
+  const Ip=w.querySelector("#bsIp"),Gd=w.querySelector("#bsG");
+  const paintIco=()=>{Ip.innerHTML=pas(N.value,w.querySelector("#bsC").value,v.ico);Gd.querySelectorAll("[data-i]").forEach(b=>b.classList.toggle("sel",(b.dataset.i||"")===(v.ico||"")))};paintIco();
+  N.addEventListener("input",paintIco);w.querySelector("#bsC").addEventListener("change",paintIco);
+  w.querySelector("#bsI").onclick=()=>Gd.classList.toggle("hide");
+  Gd.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{v.ico=b.dataset.i;paintIco();Gd.classList.add("hide")});
   w.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{v.concerne=b.dataset.w;w.querySelectorAll("[data-w]").forEach(x=>x.classList.toggle("sel",x===b));upd()});
   const sS=w.querySelector("#bsS");if(sS)sS.onclick=()=>{v.suivi=!v.suivi;sS.querySelector(".sw").classList.toggle("on",v.suivi)};
   w.querySelector("#bsOk").onclick=()=>{const nom=N.value.trim(),m=num(M.value);if(!nom&&!m){N.focus();return}
-    const o=it||{id:uid()};o.nom=nom;o.cat=w.querySelector("#bsC").value;o.montant=m;if(list==="commun")o.concerne=v.concerne;else{if(v.suivi)o.suivi=true;else delete o.suivi}
+    const o=it||{id:uid()};o.nom=nom;o.cat=w.querySelector("#bsC").value;if(v.ico)o.ico=v.ico;else delete o.ico;o.montant=m;if(list==="commun")o.concerne=v.concerne;else{if(v.suivi)o.suivi=true;else delete o.suivi}
     if(!it)S[list].push(o);persist();w.close();renderAll();toast(it?"Modifié":"« "+(nom||"Charge")+" » ajoutée")};
   const dl=w.querySelector("#bsDel");if(dl)dl.onclick=async()=>{if(!await ask("Supprimer « "+(it.nom||"cette charge")+" » ?","Supprimer",true))return;S[list]=S[list].filter(z=>z.id!==id);persist();w.close();renderAll()};
   setTimeout(()=>{(it?null:(v.nom?M:N))?.focus()},260);
@@ -914,7 +975,7 @@ function loanCard(c){
   const opts=[["commun","Partagé"],["moi",who("moi")],["autre",who("autre")]];
   const parMois=num(c.mensualite)>0?eur0(c.mensualite):next?eur0(next.m):"—";
   return `<div class="loan ${det?"full":""} ${L.done?"done":""}" data-cid="${c.id}">
-    <div class="lh">${pas(c.nom,"Crédits")}<div class="nm">${esc(c.nom)}</div><span class="lpc">${Math.round(L.pct*100)} %</span></div>
+    <div class="lh">${pas(c.nom,"Crédits",c.ico)}<div class="nm">${esc(c.nom)}</div><span class="lpc">${Math.round(L.pct*100)} %</span></div>
     <div class="pb"><i style="width:${Math.round(L.pct*100)}%"></i></div>
     <div class="lm"><div>Reste<b class="num">${eur0(L.reste)}</b></div><div>${num(c.mensualite)>0?"Par mois":next&&next.k!==cur?"Prochain ("+esc(mOnly(next.k))+")":"Ce mois"}<b class="num">${num(c.mensualite)>0?parMois:eur0(next?next.m:mens)}</b></div><div style="text-align:right">Fini en<b>${L.done?"✓ Remboursé":L.fin?esc(mFin(L.fin)):"Non planifiée"}</b></div></div>
     <div class="tags">${c.compte==="commun"?`<span class="tag blue">Compte commun · ${esc(c.concerne==="commun"?"partagé":who(c.concerne))}</span>`:c.budget?"":`<span class="tag amber">Hors budget</span>`}${L.vide?`<span class="tag amber">À compléter : montant à rembourser</span>`:""}${!L.fin&&!L.vide&&num(c.capital)>0?`<span class="tag coral">${eur(L.rows[L.rows.length-1].rest,0)} à planifier</span>`:""}</div>
@@ -959,7 +1020,7 @@ function renderCredits(){
 }
 function wizard(compte){
   const st={step:1,nom:"",rest:"",m:""};
-  const KIND=[["🚗","Voiture"],["🏠","Maison"],["🦷","Santé"],["🛠️","Travaux"],["✏️","Autre"]];
+  const KIND=[["🚗","Voiture"],["🏠","Maison"],["🦷","Santé"],["🛠️","Travaux"],["✏️","Autre"]];st.ico="";
   const w=sheet(`<div class="wsteps"><i></i><i></i><i></i></div><div id="wz"></div>`);
   const box=w.querySelector("#wz");
   const paint=()=>{w.querySelectorAll(".wsteps i").forEach((x,i)=>x.classList.toggle("on",i<st.step));
@@ -978,12 +1039,12 @@ function wizard(compte){
     const res=()=>{if(!R)return;const r=num(st.rest),m=num(V.value);if(!(m>0)){R.innerHTML="Paiements libres : pas de date de fin calculée.";return}
       const n=Math.ceil(r/m-1e-9),end=addM(cur,n-1);R.innerHTML=`✨ Il sera remboursé en <b>${esc(mLabel(end))}</b>, encore ${n} mensualité${n>1?"s":""}.`};res();
     if(V){V.addEventListener("input",res);setTimeout(()=>V.focus(),60)}
-    box.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{st.nom=b.dataset.k==="Autre"?"":"Crédit "+b.dataset.k.toLowerCase();N.value=st.nom;box.querySelectorAll("[data-k]").forEach(x=>x.classList.toggle("sel",x===b));N.focus()});
+    box.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{st.nom=b.dataset.k==="Autre"?"":"Crédit "+b.dataset.k.toLowerCase();st.ico=b.dataset.k==="Autre"?"":KIND.find(x=>x[1]===b.dataset.k)[0];N.value=st.nom;box.querySelectorAll("[data-k]").forEach(x=>x.classList.toggle("sel",x===b));N.focus()});
     const bk=box.querySelector("[data-bk]");if(bk)bk.onclick=()=>{if(V)st[st.step===2?"rest":"m"]=V.value;st.step--;paint()};
     box.querySelector("[data-nx]").onclick=()=>{
       if(st.step===1){st.nom=N.value.trim();if(!st.nom){N.focus();return}st.step=2;paint();return}
       if(st.step===2){st.rest=V.value;if(!(num(st.rest)>0)){V.focus();return}st.step=3;paint();return}
-      st.m=V.value;const c={id:uid(),nom:st.nom,compte,concerne:compte==="perso"?"moi":"commun",capital:num(st.rest),debut:cur,mensualite:num(st.m),finCible:"",budget:compte==="perso",ech:{}};
+      st.m=V.value;const c={id:uid(),nom:st.nom,...(st.ico?{ico:st.ico}:{}),compte,concerne:compte==="perso"?"moi":"commun",capital:num(st.rest),debut:cur,mensualite:num(st.m),finCible:"",budget:compte==="perso",ech:{}};
       S.credits.push(c);persist();w.close();view="credits";renderAll();toast("« "+c.nom+" » ajouté")};
   };
   paint();
