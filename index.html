@@ -499,7 +499,7 @@ tr.now td{background:var(--accSoft)}
     </div>
     <div class="sect">
       <h4>Version de l'appli</h4>
-      <div class="fill" style="border:0"><div class="t">Version <span id="appVer">budget-v16</span><small id="appVerInfo">Les mises à jour s'installent toutes seules.</small></div><button class="btn ghost" id="btnUpdate">Rechercher</button></div>
+      <div class="fill" style="border:0"><div class="t">Version <span id="appVer">budget-v17</span><small id="appVerInfo">Les mises à jour s'installent toutes seules.</small></div><button class="btn ghost" id="btnUpdate">Rechercher</button></div>
     </div>
     <div class="sect">
       <h4>Réinitialiser</h4>
@@ -743,7 +743,7 @@ function renderMois(){
         <div class="tile"><div class="k">🐖 À mettre de côté</div><div class="v">${eur(r.epargne)}</div></div>
         <div class="tile"><div class="k">👛 À garder sur ton compte</div><div class="v">${eur(r.comptePerso)}</div></div>
       </div>
-      ${r.valide?`<div class="dispo ${r.marge<0?"ko":""}"><span>${r.marge<0?"⚠️ Dépassement ce mois":"Il te reste à dépenser"}</span><b>${eur(r.marge)}</b></div>`:""}
+      ${r.valide?`<div class="dispo ${r.marge<0?"ko":""}"><span>${r.marge<0?"⚠️ Dépassement ce mois":"Marge sur ton compte"}</span><b>${eur(r.marge)}</b></div>`:""}
     </div>
 
     <div class="card c5">
@@ -782,7 +782,7 @@ function renderMois(){
         ${r.retours?`<div class="bdr"><div class="ico" style="background:var(--mintSoft)">↩️</div><div><div class="n">Remboursements reçus <span class="pc" style="color:var(--mint)">${pc(r.retours)}</span></div></div><div class="v num" style="color:var(--mint)">+ ${eur(r.retours)}<small>ce qu'on te devait</small></div></div>`:""}
         <div class="sep"></div>
         <div class="bdr"><div class="ico" style="background:var(--mintSoft)">💰</div><div class="n">À mettre de côté <span class="pc" style="color:var(--mint)">${pc(!r.valide&&r.reste<0?r.reste:r.epargne)}</span></div><div class="v num" style="color:${!r.valide&&r.reste<0?"var(--coral)":"var(--mint)"};font-size:17px">${eur(!r.valide&&r.reste<0?r.reste:r.epargne)}</div></div>
-        ${r.valide||r.marge>0?`<div class="bdr"><div class="ico" style="background:var(--s3)">👛</div><div class="n">${r.valide?"Il te reste à dépenser":"Marge gardée sur ton compte"}</div><div class="v num" style="color:${r.marge<0?"var(--coral)":"var(--mu)"}">${eur(r.marge)}</div></div>`:""}
+        ${r.valide||r.marge>0?`<div class="bdr"><div class="ico" style="background:var(--s3)">👛</div><div class="n">${r.valide?"Marge sur ton compte":"Marge gardée sur ton compte"}</div><div class="v num" style="color:${r.marge<0?"var(--coral)":"var(--mu)"}">${eur(r.marge)}</div></div>`:""}
       </div>
     </div>
 
