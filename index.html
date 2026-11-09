@@ -499,7 +499,7 @@ tr.now td{background:var(--accSoft)}
     </div>
     <div class="sect">
       <h4>Version de l'appli</h4>
-      <div class="fill" style="border:0"><div class="t">Version <span id="appVer">budget-v17</span><small id="appVerInfo">Les mises à jour s'installent toutes seules.</small></div><button class="btn ghost" id="btnUpdate">Rechercher</button></div>
+      <div class="fill" style="border:0"><div class="t">Version <span id="appVer">budget-v18</span><small id="appVerInfo">Les mises à jour s'installent toutes seules.</small></div><button class="btn ghost" id="btnUpdate">Rechercher</button></div>
     </div>
     <div class="sect">
       <h4>Réinitialiser</h4>
@@ -731,12 +731,12 @@ function renderMois(){
   document.getElementById("v-mois").innerHTML=`
   <div class="grid">
     <div class="c12 hero ${neg?"neg":""}">
-      <div class="lbl">${r.attente?"Saisis ton salaire pour démarrer "+esc(mOnly(cur)):r.valide?"✓ Mois validé · tu mets de côté":neg?"Dépassement en "+esc(mOnly(cur)):"Ce mois-ci, tu peux mettre de côté"}</div>
+      <div class="lbl">${r.attente?"Saisis ton salaire pour démarrer "+esc(mOnly(cur)):r.valide?"✓ Mois validé · tu as mis de côté":neg?"Dépassement en "+esc(mOnly(cur)):"Ce mois-ci, tu peux mettre de côté"}</div>
       <div class="amt">${r.attente?"— €":eur(!r.valide&&r.reste<0?r.reste:r.epargne).replace(/,(\d\d) €$/,'<small>,$1 €</small>')}</div>
       <div class="meta">
         <span class="chip">Salaire <b>${eur(r.salaire,0)}</b></span>
         <span class="chip">Dépenses <b>${eur(r.virement+r.depenses,0)}</b></span>${r.recus?`<span class="chip">Reçu <b>+ ${eur(r.recus,0)}</b></span>`:""}${duTotal?`<span class="chip">On te doit <b>${eur(duTotal,0)}</b></span>`:""}
-        <span class="chip"><b>${r.salaire?Math.round(r.epargne/r.salaire*100):0} %</b> du salaire</span>${!r.valide&&r.marge>0?`<span class="chip">Marge <b>${eur(r.marge)}</b> sur ton compte</span>`:""}${r.reprises?`<span class="chip">Repris sur l'épargne <b>${eur(r.reprises)}</b></span>`:""}
+        <span class="chip">🐖 <b>${r.salaire?Math.round(r.epargne/r.salaire*100):0} %</b> de ton salaire en épargne</span>${!r.valide&&r.marge>0?`<span class="chip">Marge <b>${eur(r.marge)}</b> sur ton compte</span>`:""}${r.reprises?`<span class="chip">Repris sur l'épargne <b>${eur(r.reprises)}</b></span>`:""}
       </div>
       <div class="tr ${CC()?"":"two"}">
         ${CC()?`<div class="tile"><div class="k">🏠 À virer au commun</div><div class="v">${eur(r.virement)}</div></div>`:""}
@@ -927,6 +927,11 @@ function renderCharges(){
 function sheet(html){const w=document.createElement("div");w.className="bs";w.innerHTML=`<div class="bsd"></div><div class="sheet" role="dialog"><div class="grab"></div>${html}</div>`;
   document.body.appendChild(w);requestAnimationFrame(()=>requestAnimationFrame(()=>w.classList.add("on")));
   w.close=()=>{w.classList.remove("on");setTimeout(()=>w.remove(),200)};w.querySelector(".bsd").onclick=w.close;
+  // Glisser la fenêtre vers le bas pour la fermer sans enregistrer
+  const sh=w.querySelector(".sheet");let dy0=null,dy=0;
+  sh.addEventListener("touchstart",e=>{dy0=(sh.scrollTop<=0)?e.touches[0].clientY:null;dy=0},{passive:true});
+  sh.addEventListener("touchmove",e=>{if(dy0===null)return;dy=e.touches[0].clientY-dy0;if(dy>0){if(e.cancelable)e.preventDefault();sh.style.transition="none";sh.style.transform="translateY("+dy+"px)"}},{passive:false});
+  sh.addEventListener("touchend",()=>{if(dy0===null)return;sh.style.transition="";if(dy>90){sh.style.transform="";w.close()}else sh.style.transform="";dy0=null});
   w.addEventListener("keydown",e=>{if(e.key==="Escape")w.close();if(e.key==="Enter"&&e.target.tagName==="INPUT"){e.preventDefault();w.querySelector(".okb")?.click()}});return w}
 const TILES=[["🏠","Loyer / crédit","Logement","Loyer"],["⚡","Énergie","Énergie","Électricité"],["🌐","Internet","Abonnements","Internet"],["📱","Mobile","Abonnements","Mobile"],["🛡️","Assurance","Assurances","Assurance"],["🔁","Abonnement","Abonnements",""],["🚗","Voiture","Véhicule",""],["🛒","Courses","Vie courante","Courses"],["➕","Autre","Vie courante",""]];
 function sheetTiles(list){
