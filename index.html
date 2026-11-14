@@ -557,7 +557,7 @@ tr.now td{background:var(--accSoft)}
     </div>
     <div class="sect">
       <h4>Version de l'appli</h4>
-      <div class="fill" style="border:0"><div class="t">Version <span id="appVer">budget-v21</span><small id="appVerInfo">Les mises à jour s'installent toutes seules.</small></div><button class="btn ghost" id="btnUpdate">Rechercher</button></div>
+      <div class="fill" style="border:0"><div class="t">Version <span id="appVer">budget-v22</span><small id="appVerInfo">Les mises à jour s'installent toutes seules.</small></div><button class="btn ghost" id="btnUpdate">Rechercher</button></div>
     </div>
     <div class="sect">
       <h4>Réinitialiser</h4>
@@ -758,9 +758,9 @@ function newMonth(){const ks=keys(),last=ks[ks.length-1],k=nextKey(last),p=S.moi
   S.mois[k]={salaire:0,loisirs:p.loisirs,exc:[],fige:null};cur=k;view="mois";persist();renderAll();toast(mLabel(k)+" commencé : saisis ton salaire")}
 
 // Fenêtre de confirmation intégrée (les confirm() du navigateur sont bloqués dans certains aperçus et applis)
-function ask(msg,ok="Confirmer",danger){return new Promise(res=>{const w=document.createElement("div");w.className="ask";
+function ask(msg,ok="Confirmer",danger,no="Annuler"){return new Promise(res=>{const w=document.createElement("div");w.className="ask";
   const [t,...rest]=msg.split("\n");
-  w.innerHTML=`<div class="card"><h3 style="margin:0 0 10px;font-family:var(--num)">${esc(t)}</h3><p class="muted">${esc(rest.join("\n").trim())}</p><div class="btns" style="justify-content:flex-end"><button class="btn ghost" data-a="0">Annuler</button><button class="btn ${danger?"danger":""}" data-a="1">${esc(ok)}</button></div></div>`;
+  w.innerHTML=`<div class="card"><h3 style="margin:0 0 10px;font-family:var(--num)">${esc(t)}</h3><p class="muted">${esc(rest.join("\n").trim())}</p><div class="btns" style="justify-content:flex-end"><button class="btn ghost" data-a="0">${esc(no)}</button><button class="btn ${danger?"danger":""}" data-a="1">${esc(ok)}</button></div></div>`;
   w.onclick=e=>{const b=e.target.closest("[data-a]");if(!b&&e.target!==w)return;w.remove();res(!!b&&b.dataset.a==="1")};document.body.appendChild(w);w.querySelector('[data-a="1"]').focus()})}
 /* ---------- Petits composants ---------- */
 const money=(v,a,sm)=>`<span class="money${sm?" sm":""}"><input inputmode="decimal" value="${v===""||v==null?"":String(Math.round(num(v)*100)/100).replace(".",",")}" ${a}></span>`;
@@ -1113,9 +1113,14 @@ function sheetEdit(list,id,preset){
   Gd.querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{v.ico=b.dataset.i;paintIco();Gd.classList.add("hide")});
   w.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{v.concerne=b.dataset.w;w.querySelectorAll("[data-w]").forEach(x=>x.classList.toggle("sel",x===b));upd()});
   const sS=w.querySelector("#bsS");if(sS)sS.onclick=()=>{v.suivi=!v.suivi;sS.querySelector(".sw").classList.toggle("on",v.suivi)};
-  w.querySelector("#bsOk").onclick=()=>{const nom=N.value.trim(),m=num(M.value);if(!nom&&!m){N.focus();return}
+  w.querySelector("#bsOk").onclick=async()=>{const nom=N.value.trim(),m=num(M.value);if(!nom&&!m){N.focus();return}
+    // Mois déjà figé (validé ou clôturé) : la nouvelle charge compte-t-elle aussi pour ce mois ?
+    const mo=S.mois[cur];let aussi=false;
+    if(!it&&m&&mo&&mo.fige){const pp=list==="commun"?part(v.concerne,m):m;
+      aussi=await ask("Compter aussi cette charge pour "+mLabel(cur)+" ?\n"+mLabel(cur)+" est déjà "+(mo.valide?"validé":"clôturé")+".\n\nOui : « "+(nom||"la charge")+" » compte dès ce mois"+(list==="perso"?" et ta marge baisse de "+eur(m)+".":(mo.valide?" (ta part : "+eur(pp)+" ; le virement déjà validé ne change pas).":"."))+"\nNon : elle démarre le mois suivant.","Oui, dès "+mOnly(cur),false,"Non, mois suivant");
+      if(aussi){const f=mo.fige;if(list==="perso")f.persoCharges=num(f.persoCharges)+m;else{f.totalCommun=num(f.totalCommun)+m;f.maPart=num(f.maPart)+pp;if(!mo.valide)f.virement=Math.ceil(Math.round(f.maPart*100)/100/50)*50}}}
     const o=it||{id:uid()};o.nom=nom;o.cat=w.querySelector("#bsC").value;if(v.ico)o.ico=v.ico;else delete o.ico;o.montant=m;if(list==="commun")o.concerne=v.concerne;else{if(v.suivi)o.suivi=true;else delete o.suivi}
-    if(!it)S[list].push(o);persist();w.close();renderAll();toast(it?"Modifié":"« "+(nom||"Charge")+" » ajoutée")};
+    if(!it)S[list].push(o);persist();w.close();renderAll();toast(it?"Modifié":"« "+(nom||"Charge")+" » ajoutée"+(S.mois[cur]&&S.mois[cur].fige?(aussi?" dès "+mOnly(cur):" à partir du mois suivant"):""))};
   const dl=w.querySelector("#bsDel");if(dl)dl.onclick=async()=>{if(!await ask("Supprimer « "+(it.nom||"cette charge")+" » ?","Supprimer",true))return;S[list]=S[list].filter(z=>z.id!==id);persist();w.close();renderAll()};
   setTimeout(()=>{(it?null:(v.nom?M:N))?.focus()},260);
 }
