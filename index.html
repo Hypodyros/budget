@@ -1117,7 +1117,7 @@ function sheetEdit(list,id,preset){
     // Mois déjà figé (validé ou clôturé) : la nouvelle charge compte-t-elle aussi pour ce mois ?
     const mo=S.mois[cur];let aussi=false;
     if(!it&&m&&mo&&mo.fige){const pp=list==="commun"?part(v.concerne,m):m;
-      aussi=await ask("Compter aussi cette charge pour "+mLabel(cur)+" ?\n"+mLabel(cur)+" est déjà "+(mo.valide?"validé":"clôturé")+".\n\nOui : « "+(nom||"la charge")+" » compte dès ce mois"+(list==="perso"?" et ta marge baisse de "+eur(m)+".":(mo.valide?" (ta part : "+eur(pp)+" ; le virement déjà validé ne change pas).":"."))+"\nNon : elle démarre le mois suivant.","Oui, dès "+mOnly(cur),false,"Non, mois suivant");
+      aussi=await ask("Compter aussi cette charge pour "+mLabel(cur)+" ?\nLe mois est déjà "+(mo.valide?"validé":"clôturé")+".\n\nOui : « "+(nom||"la charge")+" » compte dès ce mois"+(list==="perso"?" et ta marge baisse de "+eur(m)+".":(mo.valide?" (ta part : "+eur(pp)+" ; le virement déjà validé ne change pas).":"."))+"\nNon : elle démarre le mois suivant.","Oui, dès "+mOnly(cur),false,"Non, mois suivant");
       if(aussi){const f=mo.fige;if(list==="perso")f.persoCharges=num(f.persoCharges)+m;else{f.totalCommun=num(f.totalCommun)+m;f.maPart=num(f.maPart)+pp;if(!mo.valide)f.virement=Math.ceil(Math.round(f.maPart*100)/100/50)*50}}}
     const o=it||{id:uid()};o.nom=nom;o.cat=w.querySelector("#bsC").value;if(v.ico)o.ico=v.ico;else delete o.ico;o.montant=m;if(list==="commun")o.concerne=v.concerne;else{if(v.suivi)o.suivi=true;else delete o.suivi}
     if(!it)S[list].push(o);persist();w.close();renderAll();toast(it?"Modifié":"« "+(nom||"Charge")+" » ajoutée"+(S.mois[cur]&&S.mois[cur].fige?(aussi?" dès "+mOnly(cur):" à partir du mois suivant"):""))};
